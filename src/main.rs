@@ -138,6 +138,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let button_url_1 = &check_button_url_1();
     let button_text_2 = &check_button_text_2();
     let button_url_2 = &check_button_url_2();
+    // THESE SHOULD BE FIXED 
     // if state and details and large_image and large_text and small_image and small_text and button_text_1 and button_url_1 are not empty, then set them
     if state != "" && details != "" && large_image != "" && large_text != "" && small_image != "" && small_text != ""{
         let activity = activity::Activity::new()
@@ -157,7 +158,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     client.set_activity(activity)?;
     std::thread::sleep(std::time::Duration::from_secs(5));
     client.close()?;
-    }
+    };
     // if state and details and large_image and large_text and small_image and small_text but not button_text_1 and button_url_1 are not empty, then set them
     if state != "" && details != "" && large_image != "" && large_text != "" && small_image != "" && small_text != "" && button_text_1 == "" && button_url_1 == ""{
         let activity = activity::Activity::new()
@@ -170,5 +171,40 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .small_image(small_image)
                 .small_text(small_text),
         );
+    client.set_activity(activity)?;
+    std::thread::sleep(std::time::Duration::from_secs(5));
+    client.close()?;
+    };
+    // if state and details and large_image and large_text but not small_image and small_text and button_text_1 and button_url_1 are not empty, then set them
+    if state != "" && details != "" && large_image != "" && large_text != "" && small_image == "" && small_text == "" && button_text_1 != "" && button_url_1 != ""{
+        let activity = activity::Activity::new()
+        .state(state)
+        .details(details)
+        .assets(
+            activity::Assets::new()
+                .large_image(large_image)
+                .large_text(large_text),
+        )
+        .buttons(vec![activity::Button::new(
+            button_text_1,
+            button_url_1,
+        )]);
+    client.set_activity(activity)?;
+    std::thread::sleep(std::time::Duration::from_secs(5));
+    client.close()?;
+    };
+    // if state and details and button_text_1 and button_url_1 but not large_image and large_text and small_image and small_text are not empty, then set them
+    if state != "" && details != "" && large_image == "" && large_text == "" && small_image == "" && small_text == "" && button_text_1 != "" && button_url_1 != ""{
+        let activity = activity::Activity::new()
+        .state(state)
+        .details(details)
+        .buttons(vec![activity::Button::new(
+            button_text_1,
+            button_url_1,
+        )]);
+    client.set_activity(activity)?;
+    std::thread::sleep(std::time::Duration::from_secs(5));
+    client.close()?;
+    };
     Ok(())
 }
