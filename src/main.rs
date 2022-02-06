@@ -1,4 +1,5 @@
-use discord_rich_presence::{activity, new_client, DiscordIpc};
+use std::{process::exit};
+use discord_rich_presence::{activity::{self, Activity}, new_client, DiscordIpc};
 use clap::Parser;
 
 #[derive(Parser)]
@@ -119,15 +120,9 @@ fn check_small_text()->String{
         return "".to_string();
     }
 }
-
-
-
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Cli::parse();
     let mut client = new_client(&args.clientid)?;
-    println!("Client ID: {}", client.get_client_id());
-    println!("{}", args.large_image);
-    client.connect()?;
     let state = &check_state();
     let details = &check_details();
     let large_image = &check_large_image();
@@ -138,73 +133,60 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let button_url_1 = &check_button_url_1();
     let button_text_2 = &check_button_text_2();
     let button_url_2 = &check_button_url_2();
-    // THESE SHOULD BE FIXED 
-    // if state and details and large_image and large_text and small_image and small_text and button_text_1 and button_url_1 are not empty, then set them
-    if state != "" && details != "" && large_image != "" && large_text != "" && small_image != "" && small_text != ""{
-        let activity = activity::Activity::new()
-        .state(state)
-        .details(details)
-        .assets(
-            activity::Assets::new()
-                .large_image(large_image)
-                .large_text(large_text)
-                .small_image(small_image)
-                .small_text(small_text),
-        )
-        .buttons(vec![activity::Button::new(
-            button_text_1,
-            button_url_1,
-        )]);
-    client.set_activity(activity)?;
+    let activity = activity::Activity::new();
+    if (button_text_1 == "" && button_text_2 !="") || (button_url_1 == "" && button_url_2 !=""){
+        println!("Replace button 2 with button 1.");
+        exit(1)
+    }
+    match client.connect() {
+        Ok(_) => {println!("Client connected to Discord successfully.");},
+        Err(_) => {println!("Client failed to connect to Discord, Please try again or relaunch Discord."); exit(1)},
+    };
+    let activity_state:Activity = if state != "" {
+        activity.state(state).clone()
+    } else {
+        activity
+    };
+    let activity_details:Activity = if details != "" {
+        activity_state.details(details).clone()
+    } else {
+        activity_state
+    };
+    let activity_large_image:Activity = if large_image != "" {
+        activity_details.assets(activity::Assets::new().large_image(large_image)).clone()
+    } else {
+        activity_details
+    };
+    let activity_large_text:Activity = if large_text != "" {
+        activity_large_image.assets(activity::Assets::new().large_image(large_image).large_text(large_text)).clone()
+    } else {
+        activity_large_image
+    };
+    let activity_small_image:Activity = if small_image != "" {
+        activity_large_text.assets(activity::Assets::new().large_image(large_image).large_text(large_text).small_image(small_image)).clone()
+    } else {
+        activity_large_text
+    };
+    let activity_small_text:Activity = if small_text != "" {
+        activity_small_image.assets(activity::Assets::new().large_image(large_image).large_text(large_text).small_image(small_image).small_text(small_text)).clone()
+    } else {
+        activity_small_image
+    };
+    let activity_button_1:Activity = if button_text_1 != "" && button_url_1 !="" {
+        activity_small_text.buttons(vec![activity::Button::new(button_text_1,button_url_1)]).clone()
+    } else {
+        activity_small_text
+    };
+    let activity_button_2:Activity = if button_text_2 != "" && button_url_2 !="" {
+        activity_button_1.buttons(vec![activity::Button::new(button_text_1,button_url_1),activity::Button::new(button_text_2,button_url_2)]).clone()
+    } else {
+        activity_button_1
+    };
+    
+    client.set_activity(activity_button_2)?;
+    println!("State is: {}",state);
+    println!("Detail is: {}",details);
     std::thread::sleep(std::time::Duration::from_secs(5));
     client.close()?;
-    };
-    // if state and details and large_image and large_text and small_image and small_text but not button_text_1 and button_url_1 are not empty, then set them
-    if state != "" && details != "" && large_image != "" && large_text != "" && small_image != "" && small_text != "" && button_text_1 == "" && button_url_1 == ""{
-        let activity = activity::Activity::new()
-        .state(state)
-        .details(details)
-        .assets(
-            activity::Assets::new()
-                .large_image(large_image)
-                .large_text(large_text)
-                .small_image(small_image)
-                .small_text(small_text),
-        );
-    client.set_activity(activity)?;
-    std::thread::sleep(std::time::Duration::from_secs(5));
-    client.close()?;
-    };
-    // if state and details and large_image and large_text but not small_image and small_text and button_text_1 and button_url_1 are not empty, then set them
-    if state != "" && details != "" && large_image != "" && large_text != "" && small_image == "" && small_text == "" && button_text_1 != "" && button_url_1 != ""{
-        let activity = activity::Activity::new()
-        .state(state)
-        .details(details)
-        .assets(
-            activity::Assets::new()
-                .large_image(large_image)
-                .large_text(large_text),
-        )
-        .buttons(vec![activity::Button::new(
-            button_text_1,
-            button_url_1,
-        )]);
-    client.set_activity(activity)?;
-    std::thread::sleep(std::time::Duration::from_secs(5));
-    client.close()?;
-    };
-    // if state and details and button_text_1 and button_url_1 but not large_image and large_text and small_image and small_text are not empty, then set them
-    if state != "" && details != "" && large_image == "" && large_text == "" && small_image == "" && small_text == "" && button_text_1 != "" && button_url_1 != ""{
-        let activity = activity::Activity::new()
-        .state(state)
-        .details(details)
-        .buttons(vec![activity::Button::new(
-            button_text_1,
-            button_url_1,
-        )]);
-    client.set_activity(activity)?;
-    std::thread::sleep(std::time::Duration::from_secs(5));
-    client.close()?;
-    };
     Ok(())
 }
