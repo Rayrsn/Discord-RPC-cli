@@ -1,6 +1,7 @@
-use std::{process::exit};
+use std::{process::exit, time::{SystemTime,UNIX_EPOCH, Duration}, thread};
 use discord_rich_presence::{activity::{self, Activity}, new_client, DiscordIpc};
 use clap::Parser;
+use colored::*;
 
 #[derive(Parser)]
 struct Cli {
@@ -37,8 +38,14 @@ struct Cli {
     #[clap(long = "button_text_2",help = "The text shown on your second button (optional)",required = false,default_value="__None",display_order=11)]
     button_text_2: String,
 
-    #[clap(short = 't', long = "enable_time",help = "Whether to enable time or not (will count from current time, expects boolean) (optional)",display_order=12)]
-    enable_time: bool,    
+    #[clap(short = 't', long = "enable_time",help = "Whether to enable time or not (will count from current time) (optional)",display_order=12)]
+    enable_time: bool, 
+
+    #[clap(short = 'e', long = "exit_after",help = "Exit after a given time (optional)",default_value="-1",display_order=13)]
+    exit_after: i64,
+
+    #[clap(long = "disable_color",help = "Whether to disable colors or not (optional)",display_order=14)]
+    disable_color: bool,
 }
 fn check_state()->String{
     let args = Cli::parse();
@@ -120,6 +127,15 @@ fn check_small_text()->String{
         return "".to_string();
     }
 }
+fn check_time()->bool{
+    let args = Cli::parse();
+    if args.enable_time == true{
+        return args.enable_time;
+    } else {
+        return false;
+    }
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Cli::parse();
     let mut client = new_client(&args.clientid)?;
@@ -133,6 +149,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let button_url_1 = &check_button_url_1();
     let button_text_2 = &check_button_text_2();
     let button_url_2 = &check_button_url_2();
+    let enable_time = check_time();
     let activity = activity::Activity::new();
     if (button_text_1 == "" && button_text_2 !="") || (button_url_1 == "" && button_url_2 !=""){
         println!("Replace button 2 with button 1.");
@@ -182,11 +199,53 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     } else {
         activity_button_1
     };
+    let time_unix = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64;
+
+    let activity_time:Activity = if enable_time == true {
+        activity_button_2.timestamps(activity::Timestamps::new().start(time_unix)).clone()
+    } else {
+        activity_button_2
+    };
+    let _activity_init:Activity = activity_time;
+    client.set_activity(_activity_init)?;
+    if args.disable_color == false {
+        if state != ""{println!("{}{}","State : ".magenta(),state.blue());}
+        if details != ""{println!("{}{}","Detail : ".magenta(),details.blue());}
+        if large_image != ""{println!("{}{}","Large Image name : ".magenta(),large_image.blue());}
+        if large_text != ""{println!("{}{}","Large Image text : ".magenta(),large_text.blue());}
+        if small_image != ""{println!("{}{}","Small Image name : ".magenta(),small_image.blue());}
+        if small_text != ""{println!("{}{}","Small Image text : ".magenta(),small_text.blue());}
+        if button_text_1 != "" {println!("{}{}","Button 1 Text: ".magenta(),button_text_1.blue());}
+        if button_url_1 != "" {println!("{}{}","Button 1 URL: ".magenta(),button_url_1.blue());}
+        if button_text_2 != "" {println!("{}{}","Button 2 Text: ".magenta(),button_text_2.blue());}
+        if button_url_2 != "" {println!("{}{}","Button 2 URL: ".magenta(),button_url_2.blue());}
+        if enable_time == true {println!("{}","Time is Enabled".blue());}
+    } else {
+        if state != ""{println!("State : {}",state);}
+        if details != ""{println!("Detail : {}",details);}
+        if large_image != ""{println!("Large Image name : {}",large_image);}
+        if large_text != ""{println!("Large Image text : {}",large_text);}
+        if small_image != ""{println!("Small Image name : {}",small_image);}
+        if small_text != ""{println!("Small Image text : {}",small_text);}
+        if button_text_1 != "" {println!("Button 1 Text: {}",button_text_1);}
+        if button_url_1 != "" {println!("Button 1 URL: {}",button_url_1);}
+        if button_text_2 != "" {println!("Button 2 Text: {}",button_text_2);}
+        if button_url_2 != "" {println!("Button 2 URL: {}",button_url_2);}
+        if enable_time == true {println!("Time is Enabled");}
+    }
+    if args.exit_after != -1 {
+        if args.disable_color == false {
+            println!("{}{}{}","Exiting in ".blue(),args.exit_after.to_string().red()," seconds".blue());}
+        else {
+            println!("Exiting in {} seconds",args.exit_after.to_string());}
+
+        thread::sleep(Duration::from_secs(args.exit_after.try_into().unwrap()));
+        exit(0)
+    } else {
+        if args.disable_color == false {
+            println!("{}","Running indefinitely, Press Ctrl+C to exit.".cyan());}
+        else {
+            println!("Running indefinitely, Press Ctrl+C to exit.");}
+        loop {}} // didn't have any better idea to do this
     
-    client.set_activity(activity_button_2)?;
-    println!("State is: {}",state);
-    println!("Detail is: {}",details);
-    std::thread::sleep(std::time::Duration::from_secs(5));
-    client.close()?;
-    Ok(())
 }
