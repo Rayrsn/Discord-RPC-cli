@@ -1,5 +1,5 @@
 [package]
-name = "Discord-RPC-cli"
+name = "discord-rpc-cli"
 version = "1.1.0"
 edition = "2021"
 
