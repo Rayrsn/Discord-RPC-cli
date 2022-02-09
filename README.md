@@ -8,7 +8,7 @@
 </div>
 
 ## Building
-### For installing on Arch you can use the Aur ([discord-rpc-cli-git](https://aur.archlinux.org/packages/discord-rpc-cli-git))
+### For installing on Arch you can use the AUR ([discord-rpc-cli-git](https://aur.archlinux.org/packages/discord-rpc-cli-git))
 ### Simply run
 #### *Make sure you have rust installed*
 ```bash
