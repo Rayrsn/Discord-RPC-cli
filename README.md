@@ -8,8 +8,9 @@
 </div>
 
 ## Building
-#### *Make sure you have rust installed*
+### For installing on Arch you can use the Aur ([discord-rpc-cli-git](https://aur.archlinux.org/packages/discord-rpc-cli-git))
 ### Simply run
+#### *Make sure you have rust installed*
 ```bash
 git clone https://github.com/Rayrsn/Discord-RPC-cli && cd Discord-RPC-cli && cargo b --release
 ```
