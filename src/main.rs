@@ -14,16 +14,16 @@ struct Cli {
     #[clap(short = 'd', long = "details",help = "Your desired details string (optional)",required = false,default_value="__None",display_order=3)]
     details: String,
 
-    #[clap(short = 'I', long = "large_image",help = "The name of your large image (optional)",required = false,display_order=4)]
+    #[clap(short = 'N', long = "large_image",help = "The name of your large image (optional)",required = false,display_order=4)]
     large_image: String,
 
-    #[clap(short = 'N', long = "large_image_name",help = "The text shown on your large image (optional)",required = false,default_value="__None",display_order=5)]
+    #[clap(short = 'I', long = "large_image_text",help = "The text shown on your large image (optional)",required = false,default_value="__None",display_order=5)]
     large_text: String,
 
-    #[clap(short = 'i', long = "small_image",help = "The name of your small image (optional)",required = false,default_value="__None",display_order=6)]
+    #[clap(short = 'n', long = "small_image",help = "The name of your small image (optional)",required = false,default_value="__None",display_order=6)]
     small_image: String,
     
-    #[clap(short = 'n', long = "small_image_name",help = "The text shown on your small image (optional)",required = false,default_value="__None",display_order=7)]
+    #[clap(short = 'i', long = "small_image_text",help = "The text shown on your small image (optional)",required = false,default_value="__None",display_order=7)]
     small_text: String,
 
     #[clap(long = "button_url_1",help = "The url of your first button (optional)",required = false,default_value="__None",display_order=8)]
