@@ -14,7 +14,7 @@ struct Cli {
     #[clap(short = 'd', long = "details",help = "Your desired details string (optional)",required = false,default_value="__None",display_order=3)]
     details: String,
 
-    #[clap(short = 'N', long = "large_image",help = "The name of your large image (optional)",required = false,display_order=4)]
+    #[clap(short = 'N', long = "large_image",help = "The name of your large image (optional)",required = false,default_value="__None",display_order=4)]
     large_image: String,
 
     #[clap(short = 'I', long = "large_image_text",help = "The text shown on your large image (optional)",required = false,default_value="__None",display_order=5)]
