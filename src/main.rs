@@ -220,7 +220,6 @@ fn check_spectate_id()->String{
         return "".to_string();
     }
 }
-//// functoion moonde
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Cli::parse();
     let mut client = new_client(&args.clientid)?;
