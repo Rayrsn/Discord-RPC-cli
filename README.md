@@ -7,6 +7,32 @@
 </p>
 </div>
 
+## Features
+* **Typical RPC Features**
+  - State
+  - Details
+  - Displaying large image and it's custom text
+  - Displaying small image and it's custom text
+  - Buttons
+    - Can put 2 buttons
+
+* **More Advanced Features**
+  - Setting custom times (Unix format)
+    - Can set start time
+    - Can set end time
+  - Creating a party
+    - Can set party size
+    - Can set party ID
+  - Creating a match
+    - Can set match ID
+    - Can set join ID
+    - Can set spectate ID
+
+* **Other Featurs**
+  - Show the time from when the program was run
+  - Set a time for the program to exit after reaching it
+  - Disable colored output (Enabled by default.)
+
 ## Building
 ### For installing on Arch you can use the AUR ([discord-rpc-cli-git](https://aur.archlinux.org/packages/discord-rpc-cli-git))
 ### Simply run
