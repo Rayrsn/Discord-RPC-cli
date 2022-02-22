@@ -22,41 +22,41 @@ struct Cli {
 
     #[clap(short = 'n', long = "small_image",help = "The name of your small image (optional)",required = false,default_value="__None",display_order=6)]
     small_image: String,
-    
+
     #[clap(short = 'i', long = "small_image_text",help = "The text shown on your small image (optional)",required = false,default_value="__None",display_order=7)]
     small_text: String,
 
-    #[clap(long = "button_url_1",help = "The url of your first button (optional)",required = false,default_value="__None",display_order=8)]
+    #[clap(short = 'U', long = "button_url_1",help = "The url of your first button (optional)",required = false,default_value="__None",display_order=8)]
     button_url_1: String,
 
-    #[clap(long = "button_text_1",help = "The text shown on your first button (optional)",required = false,default_value="__None",display_order=9)]
+    #[clap(short = 'B', long = "button_text_1",help = "The text shown on your first button (optional)",required = false,default_value="__None",display_order=9)]
     button_text_1: String,
 
-    #[clap(long = "button_url_2",help = "The url of your second button (optional)",required = false,default_value="__None",display_order=10)]
+    #[clap(short = 'u', long = "button_url_2",help = "The url of your second button (optional)",required = false,default_value="__None",display_order=10)]
     button_url_2: String,
 
-    #[clap(long = "button_text_2",help = "The text shown on your second button (optional)",required = false,default_value="__None",display_order=11)]
+    #[clap(short = 'b', long = "button_text_2",help = "The text shown on your second button (optional)",required = false,default_value="__None",display_order=11)]
     button_text_2: String,
 
-    #[clap(long = "start_time",help = "Set the start time (Unix time) (optional)",default_value="-1",display_order=12)]
+    #[clap(short = 'S', long = "start_time",help = "Set the start time (Unix time) (optional)",default_value="-1",display_order=12)]
     start_time: i64,
 
-    #[clap(long = "end_time",help = "Set the end time (Unix time) (optional)",default_value="-1",display_order=13)]
+    #[clap(short = 'E', long = "end_time",help = "Set the end time (Unix time) (optional)",default_value="-1",display_order=13)]
     end_time: i64,
 
-    #[clap(long = "party_size",help = "Creates a party with a current size of _ and a max size of _ (Example: [1,10]) (optional)",default_value="__None",display_order=14)]
+    #[clap(short = 'P', long = "party_size",help = "Creates a party with a current size of _ and a max size of _ (Example: [1,10]) (optional)",default_value="__None",display_order=14)]
     party_size: String,
 
-    #[clap(long = "party_id",help = "Sets the ID of the party (Has to be used with party_size) (optional)",default_value="__None",display_order=15)]
+    #[clap(short = 'p', long = "party_id",help = "Sets the ID of the party (Has to be used with party_size) (optional)",default_value="__None",display_order=15)]
     party_id: String,
 
-    #[clap(long = "match_id",help = "Sets the ID of the match (Can't be used with buttons) (optional)",default_value="__None",display_order=16)]
+    #[clap(short = 'm', long = "match_id",help = "Sets the ID of the match (Can't be used with buttons) (optional)",default_value="__None",display_order=16)]
     match_id: String,
 
-    #[clap(long = "join_id",help = "Sets the join ID of the match (Has to be used with match_id) (optional)",default_value="__None",display_order=17)]
+    #[clap(short = 'j', long = "join_id",help = "Sets the join ID of the match (Has to be used with match_id) (optional)",default_value="__None",display_order=17)]
     join_id: String,
 
-    #[clap(long = "spectate_id",help = "Sets the spectate ID of the match (Has to be used with match_id) (optional)",default_value="__None",display_order=18)]
+    #[clap(short = 'y', long = "spectate_id",help = "Sets the spectate ID of the match (Has to be used with match_id) (optional)",default_value="__None",display_order=18)]
     spectate_id: String,
 
     #[clap(short = 't', long = "enable_time",help = "Whether to enable time or not (will count from current time) (optional)",display_order=19)]
@@ -65,7 +65,7 @@ struct Cli {
     #[clap(short = 'e', long = "exit_after",help = "Exit after a given time (optional)",default_value="-1",display_order=20)]
     exit_after: i64,
 
-    #[clap(long = "disable_color",help = "Whether to disable colors or not (optional)",display_order=21)]
+    #[clap(short = 'C', long = "disable_color",help = "Whether to disable colors or not (optional)",display_order=21)]
     disable_color: bool,
 }
 fn check_state()->String{
@@ -220,6 +220,7 @@ fn check_spectate_id()->String{
         return "".to_string();
     }
 }
+//// functoion moonde
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Cli::parse();
     let mut client = new_client(&args.clientid)?;
