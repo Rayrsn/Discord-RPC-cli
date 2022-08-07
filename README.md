@@ -37,7 +37,7 @@
   - Disable colored output (Colors are enabled by default.)
 
 ## Building
-### For installing on Arch you can use the AUR ([discord-rpc-cli-git](https://aur.archlinux.org/packages/discord-rpc-cli))
+### For installing on Arch you can use the AUR ([discord-rpc-cli](https://aur.archlinux.org/packages/discord-rpc-cli))
 ### Simply run
 #### *Make sure you have rust installed*
 ```bash
