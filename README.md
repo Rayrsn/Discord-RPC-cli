@@ -31,13 +31,13 @@
     - Can set join ID
     - Can set spectate ID
 
-* **Other Featurs**
-  - Show the time from when the program was run
-  - Set a time for the program to exit after reaching it
-  - Disable colored output (Enabled by default.)
+* **Other Features**
+  - Show the time from when the program was run.
+  - Set a time for the program to exit after reaching it. (Countdown)
+  - Disable colored output (Colors are enabled by default.)
 
 ## Building
-### For installing on Arch you can use the AUR ([discord-rpc-cli-git](https://aur.archlinux.org/packages/discord-rpc-cli-git))
+### For installing on Arch you can use the AUR ([discord-rpc-cli-git](https://aur.archlinux.org/packages/discord-rpc-cli))
 ### Simply run
 #### *Make sure you have rust installed*
 ```bash
