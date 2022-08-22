@@ -1,6 +1,6 @@
 use std::{process::exit, time::{SystemTime,UNIX_EPOCH, Duration}, thread};
 use clap::StructOpt;
-use discord_rich_presence::{activity::{self, Activity,Party,Secrets}, new_client, DiscordIpc};
+use discord_rich_presence::{activity::{self, Activity,Party,Secrets}, DiscordIpcClient, DiscordIpc};
 use colored::*;
 mod cli;
 
@@ -23,7 +23,7 @@ fn check_max_party_size()->String{
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = cli::Cli::parse();
-    let mut client = new_client(&args.clientid)?;
+    let mut client = DiscordIpcClient::new(&args.clientid)?;
     let state = args.state;
     let details = args.details;
     let large_image = args.large_image;
