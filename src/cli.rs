@@ -59,9 +59,12 @@ pub(crate) struct Cli {
     #[clap(short = 't', long = "enable_time",help = "Whether to enable time or not (will count from current time) (optional)",display_order=19)]
     pub enable_time: bool, 
 
-    #[clap(short = 'e', long = "exit_after",help = "Exit after a given time (optional)",default_value="-1",display_order=20)]
+    #[clap(short = 'a', long = "afk",help = "Whether to enable AFK RPC or not) (optional)",display_order=20)]
+    pub afk_rpc: bool, 
+
+    #[clap(short = 'e', long = "exit_after",help = "Exit after a given time (optional)",default_value="-1",display_order=21)]
     pub exit_after: i64,
 
-    #[clap(short = 'C', long = "disable_color",help = "Whether to disable colors or not (optional)",display_order=21)]
+    #[clap(short = 'C', long = "disable_color",help = "Whether to disable colors or not (optional)",display_order=22)]
     pub disable_color: bool,
 }

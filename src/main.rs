@@ -41,6 +41,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let join_id = args.join_id;
     let spectate_id = args.spectate_id;
     let enable_time = args.enable_time;
+    let afk_rpc = args.afk_rpc;
     let activity = activity::Activity::new();
 
     if (button_text_1 == "" && button_text_2 !="") || (button_url_1 == "" && button_url_2 !=""){
