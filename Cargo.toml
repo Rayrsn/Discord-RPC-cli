@@ -15,4 +15,4 @@ keywords = ["discord", "rich-presence", "cli", "rpc"]
 discord-rich-presence = "0.2.2"
 clap = { version = "3.0.14", features = ["derive"] }
 colored = "2.0.0"
-
+user-idle = "0.5.1"
