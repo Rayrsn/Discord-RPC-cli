@@ -2,7 +2,7 @@ use clap::Parser;
 
 #[derive(Parser)]
 pub(crate) struct Cli {
-    #[clap(short = 'c', long = "clientid",help = "Your application's client id (REQUIRED)" ,required = true,display_order = 1)]
+    #[clap(short = 'c', long = "clientid",help = "Your application's client id (REQUIRED if AFK is off)" ,required = false, default_value="__None",display_order = 1)]
     pub clientid: String,
 
     #[clap(short = 'd', long = "details",help = "Your desired details string (optional)",required = false,default_value="__None",display_order=2)]
@@ -62,9 +62,15 @@ pub(crate) struct Cli {
     #[clap(short = 'a', long = "afk",help = "Whether to enable AFK RPC or not) (optional)",display_order=20)]
     pub afk_rpc: bool, 
 
-    #[clap(short = 'e', long = "exit_after",help = "Exit after a given time (optional)",default_value="-1",display_order=21)]
+    #[clap(short = 'f', long = "afk_after",help = "How many seconds should pass after the AFK RPC is started [In Seconds] (optional)",default_value="5",display_order=21)]
+    pub afk_after: i64,
+    
+    #[clap(short = 'k', long = "afk_update",help = "How often to check wether the user is idle or not [In Seconds](optional)",default_value="20",display_order=22)]
+    pub afk_update: i64,
+
+    #[clap(short = 'e', long = "exit_after",help = "Exit after a given time (optional)",default_value="-1",display_order=23)]
     pub exit_after: i64,
 
-    #[clap(short = 'C', long = "disable_color",help = "Whether to disable colors or not (optional)",display_order=22)]
+    #[clap(short = 'C', long = "disable_color",help = "Whether to disable colors or not (optional)",display_order=24)]
     pub disable_color: bool,
 }

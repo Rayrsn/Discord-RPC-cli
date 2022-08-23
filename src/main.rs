@@ -2,6 +2,8 @@ use std::{process::exit, time::{SystemTime,UNIX_EPOCH, Duration}, thread};
 use clap::StructOpt;
 use discord_rich_presence::{activity::{self, Activity,Party,Secrets}, DiscordIpcClient, DiscordIpc};
 use colored::*;
+use user_idle::UserIdle;
+
 mod cli;
 
 fn check_current_party_size()->String{
@@ -21,9 +23,15 @@ fn check_max_party_size()->String{
     }
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> () {
     let args = cli::Cli::parse();
-    let mut client = DiscordIpcClient::new(&args.clientid)?;
+    let afk_rpc = args.afk_rpc;
+    let afk_after = args.afk_after;
+    let afk_update = args.afk_update;
+
+    if afk_rpc == false {
+    let mut client = DiscordIpcClient::new(&args.clientid).expect("Failed to create client");
+
     let state = args.state;
     let details = args.details;
     let large_image = args.large_image;
@@ -41,24 +49,34 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let join_id = args.join_id;
     let spectate_id = args.spectate_id;
     let enable_time = args.enable_time;
-    let afk_rpc = args.afk_rpc;
     let activity = activity::Activity::new();
 
-    if (button_text_1 == "" && button_text_2 !="") || (button_url_1 == "" && button_url_2 !=""){
-        println!("Replace button 2 with button 1.");
+    // Exit conditions
+    if args.clientid == "__None" {
+        println!("{}{}", "error: ".red().bold(),"The following required argument was not provided: clientid
+
+USAGE:
+    discord-rpc-cli [OPTIONS]
+
+For more information try --help");
+        exit(1);
+    }
+
+    if (button_text_1 == "__None" && button_text_2 !="") || (button_url_1 == "__None" && button_url_2 !=""){
+        println!("{}{}","error: ".red().bold(),"Replace button 2 with button 1.");
         exit(1)
     }
     if (enable_time == true && args.start_time != -1) || (enable_time == true && args.end_time != -1) {
-        println!("Start time and End time cannot be set while enable_time is true.");
+        println!("{}{}","error: ".red().bold(),"Start time and End time cannot be set while enable_time is true.".red().bold());
         exit(1)
     }
 
     if party_id != "__None" && args.party_size == "__None"{
-        println!("party_id has to be run with a party_size.");
+        println!("{}{}","error: ".red().bold(),"party_id has to be run with a party_size.".red().bold());
         exit(1)
     }
-    if (match_id == "" && join_id != "__None") || (match_id == "" && spectate_id != "__None") {
-        println!("match_id is not specified.");
+    if (match_id == "__None" && join_id != "__None") || (match_id == "__None" && spectate_id != "__None") {
+        println!("{}{}","error: ".red().bold(),"match_id is not specified.".red().bold());
         exit(1)
     }
 
@@ -68,98 +86,100 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Err(_) => {println!("Client failed to connect to Discord, Please try again or relaunch Discord."); exit(1)},
     };
 
-    let activity_state:Activity = if state != "__None" {
-        activity.state(&state).clone()
-    } else {
-        activity
-    };
-    let activity_details:Activity = if details != "__None" {
-        activity_state.details(&details).clone()
-    } else {
-        activity_state
-    };
-    let activity_large_image:Activity = if large_image != "__None" {
-        activity_details.assets(activity::Assets::new().large_image(&large_image)).clone()
-    } else {
-        activity_details
-    };
-    let activity_large_text:Activity = if large_text != "__None" {
-        activity_large_image.assets(activity::Assets::new().large_image(&large_image).large_text(&large_text)).clone()
-    } else {
-        activity_large_image
-    };
-    let activity_small_image:Activity = if small_image != "__None" {
-        activity_large_text.assets(activity::Assets::new().large_image(&large_image).large_text(&large_text).small_image(&small_image)).clone()
-    } else {
-        activity_large_text
-    };
-    let activity_small_text:Activity = if small_text != "__None" {
-        activity_small_image.assets(activity::Assets::new().large_image(&large_image).large_text(&large_text).small_image(&small_image).small_text(&small_text)).clone()
-    } else {
-        activity_small_image
-    };
-    let activity_button_1:Activity = if button_text_1 != "__None" && button_url_1 !="" {
-        activity_small_text.buttons(vec![activity::Button::new(&button_text_1,&button_url_1)]).clone()
-    } else {
-        activity_small_text
-    };
-    let activity_button_2:Activity = if button_text_2 != "__None" && button_url_2 !="" {
-        activity_button_1.buttons(vec![activity::Button::new(&button_text_1,&button_url_1),activity::Button::new(&button_text_2,&button_url_2)]).clone()
-    } else {
-        activity_button_1
-    };
-    let time_unix = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64;
-    let activity_time:Activity = if enable_time == true {
-        activity_button_2.timestamps(activity::Timestamps::new().start(time_unix)).clone()
-    } else {
-        activity_button_2
-    };
-    let activity_start_time:Activity = if args.start_time != -1 {
-        activity_time.timestamps(activity::Timestamps::new().start(args.start_time)).clone()
-    } else {
-        activity_time
-    };
-    let activity_end_time:Activity = if args.end_time != -1 {
-        activity_start_time.timestamps(activity::Timestamps::new().end(args.end_time)).clone()
-    } else {
-        activity_start_time
-    };
-    let activity_party_size:Activity = if args.party_size != "__None" {
-        activity_end_time.party(Party::new().size([current_party_size.parse::<i32>().unwrap(), max_party_size.parse::<i32>().unwrap()]))
-    } else {
-        activity_end_time
-    };
-    let activity_party_id:Activity = if party_id != "__None" {
-        activity_party_size.party(Party::new().size([current_party_size.parse::<i32>().unwrap(), max_party_size.parse::<i32>().unwrap()]).id(&party_id))
-    } else {
-        activity_party_size
-    };
-    let activity_match_id:Activity = if match_id != "__None" && join_id == "" && spectate_id == "" {
-        activity_party_id.secrets(Secrets::new().r#match(&match_id))
-    } else {
-        activity_party_id
-    };
-    let activity_join_id:Activity = if match_id != "__None" && join_id != "__None" && spectate_id == "" {
-        activity_match_id.secrets(Secrets::new().r#match(&match_id).join(&join_id))
-    } else {
-        activity_match_id
-    };
-    let activity_spectate_id:Activity = if match_id != "__None" && join_id == "" && spectate_id != "__None" {
-        activity_join_id.secrets(Secrets::new().r#match(&match_id).spectate(&spectate_id))
-    } else {
-        activity_join_id
-    };
-    let activity_mjs_id:Activity = if match_id != "__None" && join_id != "__None" && spectate_id != "__None" {
-        activity_spectate_id.secrets(Secrets::new().r#match(&match_id).spectate(&spectate_id).join(&join_id))
-    } else {
-        activity_spectate_id
-    };
-
+        let activity_state:Activity = if state != "__None" {
+            activity.state(&state).clone()
+        } else {
+            activity
+        };
+        let activity_details:Activity = if details != "__None" {
+            activity_state.details(&details).clone()
+        } else {
+            activity_state
+        };
+        let activity_large_image:Activity = if large_image != "__None" {
+            activity_details.assets(activity::Assets::new().large_image(&large_image)).clone()
+        } else {
+            activity_details
+        };
+        let activity_large_text:Activity = if large_text != "__None" {
+            activity_large_image.assets(activity::Assets::new().large_image(&large_image).large_text(&large_text)).clone()
+        } else {
+            activity_large_image
+        };
+        let activity_small_image:Activity = if small_image != "__None" {
+            activity_large_text.assets(activity::Assets::new().large_image(&large_image).large_text(&large_text).small_image(&small_image)).clone()
+        } else {
+            activity_large_text
+        };
+        let activity_small_text:Activity = if small_text != "__None" {
+            activity_small_image.assets(activity::Assets::new().large_image(&large_image).large_text(&large_text).small_image(&small_image).small_text(&small_text)).clone()
+        } else {
+            activity_small_image
+        };
+        let activity_button_1:Activity = if button_text_1 != "__None" && button_url_1 !="" {
+            activity_small_text.buttons(vec![activity::Button::new(&button_text_1,&button_url_1)]).clone()
+        } else {
+            activity_small_text
+        };
+        let activity_button_2:Activity = if button_text_2 != "__None" && button_url_2 !="" {
+            activity_button_1.buttons(vec![activity::Button::new(&button_text_1,&button_url_1),activity::Button::new(&button_text_2,&button_url_2)]).clone()
+        } else {
+            activity_button_1
+        };
+        let time_unix = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64;
+        let activity_time:Activity = if enable_time == true {
+            activity_button_2.timestamps(activity::Timestamps::new().start(time_unix)).clone()
+        } else {
+            activity_button_2
+        };
+        let activity_start_time:Activity = if args.start_time != -1 {
+            activity_time.timestamps(activity::Timestamps::new().start(args.start_time)).clone()
+        } else {
+            activity_time
+        };
+        let activity_end_time:Activity = if args.end_time != -1 {
+            activity_start_time.timestamps(activity::Timestamps::new().end(args.end_time)).clone()
+        } else {
+            activity_start_time
+        };
+        let activity_party_size:Activity = if args.party_size != "__None" {
+            activity_end_time.party(Party::new().size([current_party_size.parse::<i32>().unwrap(), max_party_size.parse::<i32>().unwrap()]))
+        } else {
+            activity_end_time
+        };
+        let activity_party_id:Activity = if party_id != "__None" {
+            activity_party_size.party(Party::new().size([current_party_size.parse::<i32>().unwrap(), max_party_size.parse::<i32>().unwrap()]).id(&party_id))
+        } else {
+            activity_party_size
+        };
+        let activity_match_id:Activity = if match_id != "__None" && join_id == "" && spectate_id == "" {
+            activity_party_id.secrets(Secrets::new().r#match(&match_id))
+        } else {
+            activity_party_id
+        };
+        let activity_join_id:Activity = if match_id != "__None" && join_id != "__None" && spectate_id == "" {
+            activity_match_id.secrets(Secrets::new().r#match(&match_id).join(&join_id))
+        } else {
+            activity_match_id
+        };
+        let activity_spectate_id:Activity = if match_id != "__None" && join_id == "" && spectate_id != "__None" {
+            activity_join_id.secrets(Secrets::new().r#match(&match_id).spectate(&spectate_id))
+        } else {
+            activity_join_id
+        };
+        let activity_mjs_id:Activity = if match_id != "__None" && join_id != "__None" && spectate_id != "__None" {
+            activity_spectate_id.secrets(Secrets::new().r#match(&match_id).spectate(&spectate_id).join(&join_id))
+        } else {
+            activity_spectate_id
+        };
+    
     let _activity_init:Activity = activity_mjs_id;
     match client.set_activity(_activity_init) {
         Ok(_) => {println!("Client set activity successfully.");},
         Err(_) => {println!("Client failed to set activity, Please try again or relaunch Discord."); exit(1)},
-    };
+        };
+    
+    
     if args.disable_color == false {
         if state != "__None"{println!("{}{}","State : ".magenta(),state.blue());}
         if details != "__None"{println!("{}{}","Detail : ".magenta(),details.blue());}
@@ -195,7 +215,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         if args.party_size != "__None" {println!("{}{}","Party Size: ",args.party_size);}
         if party_id != "__None" {println!("{}{}","Party ID: ",party_id.to_string());}
         if enable_time == true {println!("Time is Enabled");}
-    }
+        }
+    
     if args.exit_after != -1 {
         if args.disable_color == false {
             println!("{}{}{}","Exiting in ".blue(),args.exit_after.to_string().red()," seconds".blue());}
@@ -210,4 +231,56 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         else {
             println!("Running indefinitely, Press Ctrl+C to exit.");}
         loop {thread::sleep(Duration::from_secs(10));}} // didn't have any better idea to do this
+    }
+    if afk_rpc == true {
+
+        let mut client = DiscordIpcClient::new("871404899915665438").expect("Failed to create client");
+        match client.connect() {
+            Ok(_) => {println!("Client connected to Discord successfully.");},
+            Err(_) => {println!("Client failed to connect to Discord, Please try again or relaunch Discord."); exit(1)},
+        };
+
+        if args.disable_color == false {
+            println!("{}{}", "AFK RPC".magenta(), " is enabled.");
+            if afk_after == 1 {
+                println!("{}{}{}", "Will AFK after ",afk_after.to_string().magenta(), " second.");
+            } else if afk_after == 0 {
+                println!("{}{}", "Will AFK ","immediately".magenta());
+            } else {
+                println!("{}{}{}", "Will AFK after ",afk_after.to_string().magenta(), " seconds.");
+            }
+        } else {
+            println!("AFK RPC is enabled.");
+            if afk_after == 1 {
+                println!("{}{}{}", "Will AFK after ",afk_after.to_string(), " second.");
+            } else if afk_after == 0 {
+                println!("{}", "Will AFK immediately.");
+            } else {
+                println!("{}{}{}", "Will AFK after ",afk_after.to_string(), " seconds.");
+            }
+        }
+
+        let activity = activity::Activity::new();
+        let activity_state = activity.state("Currently Inactive");
+        let activity_large_image = activity_state.assets(activity::Assets::new().large_image("idle").large_text("Inactive"));
+        let activity_button = activity_large_image.buttons(vec![activity::Button::new("Check out the Github!", "https://github.com/Rayrsn/Discord-RPC-cli")]);
+    
+    loop {
+        thread::sleep(Duration::from_secs(afk_update.try_into().expect("Failed to convert to seconds")));
+        let idle = UserIdle::get_time().expect("Failed to get idle time");
+        println!("{}", idle.as_seconds());
+        if idle.as_seconds() >= afk_after.try_into().expect("Couldn't convert afk_after to u64") {
+            client.connect().expect("Failed to connect to Discord");        
+            
+            match idle.as_seconds() {
+                0..=59 => client.set_activity(activity_button.clone().details(format!("I've been inactive for {} seconds", idle.as_seconds()).as_str())),
+                60..=119 => client.set_activity(activity_button.clone().details("I've been inactive for a minute")),
+                _ => client.set_activity(activity_button.clone().details(format!("I've been inactive for {} minutes", idle.as_minutes()).as_str())),
+                
+                }.expect("Failed to set activity");
+        } else {
+            client.set_activity(activity::Activity::default()).expect("Failed to set activity");
+            };
+        }
+    }
 }
