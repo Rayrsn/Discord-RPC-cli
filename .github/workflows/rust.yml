@@ -13,6 +13,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Install libxss-dev
+      run: sudo apt-get install -y libxss-dev
     - name: Build
       run: cargo build --verbose
     - name: Run tests
