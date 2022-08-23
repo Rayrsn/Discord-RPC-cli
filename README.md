@@ -32,6 +32,7 @@
     - Can set spectate ID
 
 * **Other Features**
+  - AFK RPC (Will show how long you've been idle for.)
   - Show the time from when the program was run.
   - Set a time for the program to exit after reaching it. (Countdown)
   - Disable colored output (Colors are enabled by default.)
