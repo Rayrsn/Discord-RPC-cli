@@ -62,7 +62,7 @@ pub(crate) struct Cli {
     #[clap(short = 'a', long = "afk",help = "Whether to enable AFK RPC or not) (optional)",display_order=20)]
     pub afk_rpc: bool, 
 
-    #[clap(short = 'f', long = "afk_after",help = "How many seconds should pass after the AFK RPC is started [In Seconds] (optional)",default_value="5",display_order=21)]
+    #[clap(short = 'f', long = "afk_after",help = "How many minutes should pass after the AFK RPC is started [In Minutes] (optional)",default_value="5",display_order=21)]
     pub afk_after: i64,
     
     #[clap(short = 'k', long = "afk_update",help = "How often to check wether the user is idle or not [In Seconds](optional)",default_value="20",display_order=22)]

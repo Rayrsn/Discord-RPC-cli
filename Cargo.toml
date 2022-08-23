@@ -1,6 +1,6 @@
 [package]
 name = "discord-rpc-cli"
-version = "1.4.0"
+version = "1.4.1"
 edition = "2021"
 authors = ["Rayr <https://rayr.ml/LinkInBio>"]
 description = "A Discord RPC cli client written purely in Rust"

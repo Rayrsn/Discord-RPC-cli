@@ -243,20 +243,20 @@ For more information try --help");
         if args.disable_color == false {
             println!("{}{}", "AFK RPC".magenta(), " is enabled.");
             if afk_after == 1 {
-                println!("{}{}{}", "Will AFK after ",afk_after.to_string().magenta(), " second.");
+                println!("{}{}{}", "Will AFK after ",afk_after.to_string().magenta(), " minute.");
             } else if afk_after == 0 {
                 println!("{}{}", "Will AFK ","immediately".magenta());
             } else {
-                println!("{}{}{}", "Will AFK after ",afk_after.to_string().magenta(), " seconds.");
+                println!("{}{}{}", "Will AFK after ",afk_after.to_string().magenta(), " minutes.");
             }
         } else {
             println!("AFK RPC is enabled.");
             if afk_after == 1 {
-                println!("{}{}{}", "Will AFK after ",afk_after.to_string(), " second.");
+                println!("{}{}{}", "Will AFK after ",afk_after.to_string(), " minute.");
             } else if afk_after == 0 {
                 println!("{}", "Will AFK immediately.");
             } else {
-                println!("{}{}{}", "Will AFK after ",afk_after.to_string(), " seconds.");
+                println!("{}{}{}", "Will AFK after ",afk_after.to_string(), " minutes.");
             }
         }
 
@@ -268,8 +268,7 @@ For more information try --help");
     loop {
         thread::sleep(Duration::from_secs(afk_update.try_into().expect("Failed to convert to seconds")));
         let idle = UserIdle::get_time().expect("Failed to get idle time");
-        println!("{}", idle.as_seconds());
-        if idle.as_seconds() >= afk_after.try_into().expect("Couldn't convert afk_after to u64") {
+        if idle.as_minutes() >= afk_after.try_into().expect("Couldn't convert afk_after to u64") {
             client.connect().expect("Failed to connect to Discord");        
             
             match idle.as_seconds() {
