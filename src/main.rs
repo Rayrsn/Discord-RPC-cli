@@ -267,30 +267,37 @@ For more information try --help");
         let activity_state = activity.state("Currently Inactive");
         let activity_large_image = activity_state.assets(activity::Assets::new().large_image("idle").large_text("Inactive"));
         let activity_button = activity_large_image.buttons(vec![activity::Button::new("Check out the Github!", "https://github.com/Rayrsn/Discord-RPC-cli")]);
-    
-    loop {
-        thread::sleep(Duration::from_secs(afk_update.try_into().expect("Failed to convert to seconds")));
-        let idle = UserIdle::get_time().expect("Failed to get idle time");
-        if idle.as_minutes() >= afk_after.try_into().expect("Couldn't convert afk_after to u64") {
-            client.connect().expect("Failed to connect to Discord");        
-            
-            match idle.as_seconds() {
-                0..=59 => client.set_activity(activity_button.clone().details(format!("I've been inactive for {} seconds", idle.as_seconds()).as_str())),
-                60..=119 => client.set_activity(activity_button.clone().details("I've been inactive for a minute")),
-                _ => client.set_activity(activity_button.clone().details(format!("I've been inactive for {} minutes", idle.as_minutes()).as_str())),
+
+        let mut connected = false;
+        
+        loop {
+            thread::sleep(Duration::from_secs(afk_update.try_into().expect("Failed to convert to seconds")));
+            let idle = UserIdle::get_time().expect("Failed to get idle time");
+
+            if idle.as_minutes() >= afk_after.try_into().expect("Couldn't convert afk_after to u64") && connected == false {
+                client.connect().expect("Failed to connect to Discord");        
                 
-                }.expect("Failed to set activity");
-        } else {
-            let data = json!({
-                "cmd": "SET_ACTIVITY",
-                "args": {
-                    "pid": std::process::id(),
-                    "activity": None::<()>
-                },
-                "nonce": Uuid::new_v4().to_string()
-            });
-            client.send(data, 1).expect("Failed to clear activity");
-            };
-        }
+                match idle.as_seconds() {
+                    0..=59 => client.set_activity(activity_button.clone().details(format!("I've been inactive for {} seconds", idle.as_seconds()).as_str())),
+                    60..=119 => client.set_activity(activity_button.clone().details("I've been inactive for a minute")),
+                    _ => client.set_activity(activity_button.clone().details(format!("I've been inactive for {} minutes", idle.as_minutes()).as_str())),
+                    
+                    }.expect("Failed to set activity");
+                connected = true;
+            } 
+
+            if connected == true && idle.as_minutes() < afk_after.try_into().expect("Couldn't convert afk_after to u64"){
+                let data = json!({
+                    "cmd": "SET_ACTIVITY",
+                    "args": {
+                        "pid": std::process::id(),
+                        "activity": None::<()>
+                    },
+                    "nonce": Uuid::new_v4().to_string()
+                });
+                client.send(data, 1).expect("Failed to clear activity");
+                connected = false;
+                };
+            }
     }
 }
