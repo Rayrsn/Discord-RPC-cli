@@ -1,6 +1,6 @@
 [package]
 name = "discord-rpc-cli"
-version = "1.4.1"
+version = "1.4.2"
 edition = "2021"
 authors = ["Rayr <https://rayr.ml/LinkInBio>"]
 description = "A Discord RPC cli client written purely in Rust"
@@ -16,3 +16,5 @@ discord-rich-presence = "0.2.2"
 clap = { version = "3.0.14", features = ["derive"] }
 colored = "2.0.0"
 user-idle = "0.5.1"
+serde_json = "1.0"
+uuid = { version = "0.8", features = ["v4"] }

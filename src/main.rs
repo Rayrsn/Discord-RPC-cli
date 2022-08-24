@@ -3,6 +3,9 @@ use clap::StructOpt;
 use discord_rich_presence::{activity::{self, Activity,Party,Secrets}, DiscordIpcClient, DiscordIpc};
 use colored::*;
 use user_idle::UserIdle;
+use uuid::Uuid;
+use serde_json::json;
+
 
 mod cli;
 
