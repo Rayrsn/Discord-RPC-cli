@@ -278,7 +278,15 @@ For more information try --help");
                 
                 }.expect("Failed to set activity");
         } else {
-            client.set_activity(activity::Activity::default()).expect("Failed to set activity");
+            let data = json!({
+                "cmd": "SET_ACTIVITY",
+                "args": {
+                    "pid": std::process::id(),
+                    "activity": None::<()>
+                },
+                "nonce": Uuid::new_v4().to_string()
+            });
+            client.send(data, 1).expect("Failed to clear activity");
             };
         }
     }
