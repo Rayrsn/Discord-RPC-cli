@@ -3,9 +3,6 @@ use clap::StructOpt;
 use discord_rich_presence::{activity::{self, Activity,Party,Secrets}, DiscordIpcClient, DiscordIpc};
 use colored::*;
 use user_idle::UserIdle;
-use uuid::Uuid;
-use serde_json::json;
-
 
 mod cli;
 
@@ -287,15 +284,7 @@ For more information try --help");
             } 
 
             if connected == true && idle.as_minutes() < afk_after.try_into().expect("Couldn't convert afk_after to u64"){
-                let data = json!({
-                    "cmd": "SET_ACTIVITY",
-                    "args": {
-                        "pid": std::process::id(),
-                        "activity": None::<()>
-                    },
-                    "nonce": Uuid::new_v4().to_string()
-                });
-                client.send(data, 1).expect("Failed to clear activity");
+                client.clear_activity().expect("Failed to clear activity");
                 connected = false;
                 };
             }
