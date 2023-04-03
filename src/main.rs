@@ -62,8 +62,9 @@ For more information try --help");
         exit(1);
     }
 
-    if (button_text_1 == "__None" && button_text_2 !="") || (button_url_1 == "__None" && button_url_2 !=""){
+    if (button_text_1 == "__None" && button_text_2 !="__None") || (button_url_1 == "__None" && button_url_2 !="__None"){
         println!("{}{}","error: ".red().bold(),"Replace button 2 with button 1.");
+        println!("button_text_1: {} button_url_1: {} button_text_2: {} button_url_2: {}",button_text_1,button_url_1,button_text_2,button_url_2);
         exit(1)
     }
     if (enable_time == true && args.start_time != -1) || (enable_time == true && args.end_time != -1) {
