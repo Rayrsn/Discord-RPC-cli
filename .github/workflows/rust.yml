@@ -7,38 +7,6 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build-lin:
-
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Install libxss-dev
-      run: sudo apt-get install -y libxss-dev
-    - name: Build
-      run: cargo build --release --verbose
-    - name: Run tests
-      run: cargo test --verbose
-    - name: Upload Release
-      uses: actions/upload-artifact@v3
-      with:
-        name: Linux
-        path: ./target/release/discord-rpc-cli
-
-  build-win:
-
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Build
-      run: cargo build --release --verbose
-    - name: Run tests
-      run: cargo test --verbose
-    - name: Upload Release
-      uses: actions/upload-artifact@v3
-      with:
-        name: Windows
-        path: ./target/release/discord-rpc-cli.exe
-
   build-mac:
 
     runs-on: macos-11
