@@ -8,16 +8,33 @@ env:
 
 jobs:
   build-mac:
-
     runs-on: macos-14
     steps:
     - uses: actions/checkout@v3
-    - name: Build
-      run: cargo build --release --verbose
+    
+    - name: Add targets
+      run: |
+        rustup target add x86_64-apple-darwin
+        rustup target add aarch64-apple-darwin
+    
+    - name: Build x86_64
+      run: cargo build --release --target x86_64-apple-darwin --verbose
+    
+    - name: Build arm64
+      run: cargo build --release --target aarch64-apple-darwin --verbose
+    
+    - name: Create universal binary
+      run: |
+        lipo -create \
+          ./target/x86_64-apple-darwin/release/discord-rpc-cli \
+          ./target/aarch64-apple-darwin/release/discord-rpc-cli \
+          -output ./target/release/discord-rpc-cli
+    
     - name: Run tests
       run: cargo test --verbose
+    
     - name: Upload Release
       uses: actions/upload-artifact@v3
       with:
-        name: MacOS
+        name: MacOS-Universal
         path: ./target/release/discord-rpc-cli
