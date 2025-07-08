@@ -1,8 +1,8 @@
 [package]
 name = "discord-rpc-cli"
-version = "1.4.6"
-edition = "2021"
-authors = ["Rayr <https://rayr.ml/LinkInBio>"]
+version = "1.4.7"
+edition = "2024"
+authors = ["Rayr <https://rayrsn.me/LinkInBio>"]
 description = "A Discord RPC cli client written purely in Rust"
 readme = "README.md"
 repository = "https://github.com/Rayrsn/Discord-RPC-cli"
@@ -12,7 +12,7 @@ keywords = ["discord", "rich-presence", "cli", "rpc"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-discord-rich-presence = "0.2.3"
-clap = { version = "3.0.14", features = ["derive"] }
-colored = "2.0.0"
-user-idle = "0.5.1"
+discord-rich-presence = "0.2.5"
+clap = { version = "4.5.40", features = ["derive"] }
+colored = "3.0.0"
+user-idle = "0.6.0"
