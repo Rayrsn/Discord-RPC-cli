@@ -1,35 +1,34 @@
 use std::{process::exit, time::{SystemTime,UNIX_EPOCH, Duration}, thread};
-use clap::StructOpt;
+use clap::Parser;
 use discord_rich_presence::{activity::{self, Activity,Party,Secrets}, DiscordIpcClient, DiscordIpc};
 use colored::*;
 use user_idle::UserIdle;
 
 mod cli;
 
-fn check_current_party_size()->String{
-    let args = cli::Cli::parse();
-    if args.party_size != "__None"{
-        args.party_size.trim_matches('[').trim_matches(']').split(",").nth(0).unwrap().to_string()
+fn check_current_party_size(party_size: &str) -> String {
+    if party_size != "__None"{
+        party_size.trim_matches('[').trim_matches(']').split(",").next().unwrap_or("1").to_string()
     } else {
-        return "".to_string();
-    }
-}
-fn check_max_party_size()->String{
-    let args = cli::Cli::parse();
-    if args.party_size != "__None"{
-        args.party_size.trim_matches('[').trim_matches(']').split(",").nth(1).unwrap().to_string()
-    } else {
-        return "".to_string();
+        "1".to_string()
     }
 }
 
-fn main() -> () {
+fn check_max_party_size(party_size: &str) -> String {
+    if party_size != "__None"{
+        party_size.trim_matches('[').trim_matches(']').split(",").nth(1).unwrap_or("1").to_string()
+    } else {
+        "1".to_string()
+    }
+}
+
+fn main() {
     let args = cli::Cli::parse();
     let afk_rpc = args.afk_rpc;
     let afk_after = args.afk_after;
     let afk_update = args.afk_update;
 
-    if afk_rpc == false {
+    if !afk_rpc {
     let mut client = DiscordIpcClient::new(&args.clientid).expect("Failed to create client");
 
     let state = args.state;
@@ -42,8 +41,8 @@ fn main() -> () {
     let button_url_1 = args.button_url_1;
     let button_text_2 = args.button_text_2;
     let button_url_2 = args.button_url_2;
-    let current_party_size = &check_current_party_size();
-    let max_party_size = &check_max_party_size();
+    let current_party_size = &check_current_party_size(&args.party_size);
+    let max_party_size = &check_max_party_size(&args.party_size);
     let party_id = args.party_id;
     let match_id = args.match_id;
     let join_id = args.join_id;
@@ -67,7 +66,7 @@ For more information try --help");
         println!("button_text_1: {} button_url_1: {} button_text_2: {} button_url_2: {}",button_text_1,button_url_1,button_text_2,button_url_2);
         exit(1)
     }
-    if (enable_time == true && args.start_time != -1) || (enable_time == true && args.end_time != -1) {
+    if (enable_time && args.start_time != -1) || (enable_time && args.end_time != -1) {
         println!("{}{}","error: ".red().bold(),"Start time and End time cannot be set while enable_time is true.".red().bold());
         exit(1)
     }
@@ -76,7 +75,7 @@ For more information try --help");
         println!("{}{}","error: ".red().bold(),"party_id has to be run with a party_size.".red().bold());
         exit(1)
     }
-    if (match_id == "__None" && join_id != "__None") || (match_id == "__None" && spectate_id != "__None") {
+    if match_id == "__None" && (join_id != "__None" || spectate_id != "__None") {
         println!("{}{}","error: ".red().bold(),"match_id is not specified.".red().bold());
         exit(1)
     }
@@ -97,38 +96,39 @@ For more information try --help");
         } else {
             activity_state
         };
-        let activity_large_image:Activity = if large_image != "__None" {
-            activity_details.assets(activity::Assets::new().large_image(&large_image)).clone()
+        // Build assets incrementally
+        let mut assets = activity::Assets::new();
+        if large_image != "__None" {
+            assets = assets.large_image(&large_image);
+        }
+        if large_text != "__None" {
+            assets = assets.large_text(&large_text);
+        }
+        if small_image != "__None" {
+            assets = assets.small_image(&small_image);
+        }
+        if small_text != "__None" {
+            assets = assets.small_text(&small_text);
+        }
+
+        let activity_with_assets = if large_image != "__None" || large_text != "__None" || 
+                                      small_image != "__None" || small_text != "__None" {
+            activity_details.assets(assets)
         } else {
             activity_details
         };
-        let activity_large_text:Activity = if large_text != "__None" {
-            activity_large_image.assets(activity::Assets::new().large_image(&large_image).large_text(&large_text)).clone()
+        let activity_button_1:Activity = if button_text_1 != "__None" && !button_url_1.is_empty() {
+            activity_with_assets.buttons(vec![activity::Button::new(&button_text_1,&button_url_1)]).clone()
         } else {
-            activity_large_image
+            activity_with_assets
         };
-        let activity_small_image:Activity = if small_image != "__None" {
-            activity_large_text.assets(activity::Assets::new().large_image(&large_image).large_text(&large_text).small_image(&small_image)).clone()
-        } else {
-            activity_large_text
-        };
-        let activity_small_text:Activity = if small_text != "__None" {
-            activity_small_image.assets(activity::Assets::new().large_image(&large_image).large_text(&large_text).small_image(&small_image).small_text(&small_text)).clone()
-        } else {
-            activity_small_image
-        };
-        let activity_button_1:Activity = if button_text_1 != "__None" && button_url_1 !="" {
-            activity_small_text.buttons(vec![activity::Button::new(&button_text_1,&button_url_1)]).clone()
-        } else {
-            activity_small_text
-        };
-        let activity_button_2:Activity = if button_text_2 != "__None" && button_url_2 !="" {
+        let activity_button_2:Activity = if button_text_2 != "__None" && !button_url_2.is_empty() {
             activity_button_1.buttons(vec![activity::Button::new(&button_text_1,&button_url_1),activity::Button::new(&button_text_2,&button_url_2)]).clone()
         } else {
             activity_button_1
         };
         let time_unix = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64;
-        let activity_time:Activity = if enable_time == true {
+        let activity_time:Activity = if enable_time {
             activity_button_2.timestamps(activity::Timestamps::new().start(time_unix)).clone()
         } else {
             activity_button_2
@@ -144,12 +144,24 @@ For more information try --help");
             activity_start_time
         };
         let activity_party_size:Activity = if args.party_size != "__None" {
-            activity_end_time.party(Party::new().size([current_party_size.parse::<i32>().unwrap(), max_party_size.parse::<i32>().unwrap()]))
+            let current_size = current_party_size.parse::<i32>().unwrap_or(1);
+            let max_size = max_party_size.parse::<i32>().unwrap_or(1);
+            if current_size < 1 || max_size < 1 || current_size > max_size {
+                println!("{}{}","error: ".red().bold(),"Invalid party size values. Current size and max size must be positive, and current size cannot exceed max size.");
+                exit(1);
+            }
+            activity_end_time.party(Party::new().size([current_size, max_size]))
         } else {
             activity_end_time
         };
         let activity_party_id:Activity = if party_id != "__None" {
-            activity_party_size.party(Party::new().size([current_party_size.parse::<i32>().unwrap(), max_party_size.parse::<i32>().unwrap()]).id(&party_id))
+            let current_size = current_party_size.parse::<i32>().unwrap_or(1);
+            let max_size = max_party_size.parse::<i32>().unwrap_or(1);
+            if current_size < 1 || max_size < 1 || current_size > max_size {
+                println!("{}{}","error: ".red().bold(),"Invalid party size values. Current size and max size must be positive, and current size cannot exceed max size.");
+                exit(1);
+            }
+            activity_party_size.party(Party::new().size([current_size, max_size]).id(&party_id))
         } else {
             activity_party_size
         };
@@ -224,7 +236,10 @@ For more information try --help");
         else {
             println!("Exiting in {} seconds",args.exit_after.to_string());}
 
-        thread::sleep(Duration::from_secs(args.exit_after.try_into().unwrap()));
+        thread::sleep(Duration::from_secs(args.exit_after.try_into().unwrap_or_else(|_| {
+            println!("{}{}","error: ".red().bold(),"Invalid exit_after value");
+            exit(1);
+        })));
         exit(0)
     } else {
         if args.disable_color == false {
@@ -233,8 +248,7 @@ For more information try --help");
             println!("Running indefinitely, Press Ctrl+C to exit.");}
         loop {thread::sleep(Duration::from_secs(10));}} // didn't have any better idea to do this
     }
-    if afk_rpc == true {
-
+    if afk_rpc {
         let mut client = DiscordIpcClient::new("871404899915665438").expect("Failed to create client");
         match client.connect() {
             Ok(_) => {println!("Client connected to Discord successfully.");},
@@ -269,10 +283,16 @@ For more information try --help");
         let mut connected = false;
         
         loop {
-            thread::sleep(Duration::from_secs(afk_update.try_into().expect("Failed to convert to seconds")));
+            thread::sleep(Duration::from_secs(afk_update.try_into().unwrap_or_else(|_| {
+                println!("{}{}","error: ".red().bold(),"Invalid afk_update value");
+                exit(1);
+            })));
             let idle = UserIdle::get_time().expect("Failed to get idle time");
 
-            if idle.as_minutes() >= afk_after.try_into().expect("Couldn't convert afk_after to u64") && connected == false {
+            if idle.as_minutes() >= afk_after.try_into().unwrap_or_else(|_| {
+                println!("{}{}","error: ".red().bold(),"Invalid afk_after value");
+                exit(1);
+            }) && connected == false {
                 client.connect().expect("Failed to connect to Discord");        
                 
                 match idle.as_seconds() {
@@ -284,7 +304,10 @@ For more information try --help");
                 connected = true;
             } 
 
-            if connected == true && idle.as_minutes() < afk_after.try_into().expect("Couldn't convert afk_after to u64"){
+            if connected == true && idle.as_minutes() < afk_after.try_into().unwrap_or_else(|_| {
+                println!("{}{}","error: ".red().bold(),"Invalid afk_after value");
+                exit(1);
+            }){
                 client.clear_activity().expect("Failed to clear activity");
                 connected = false;
                 };
