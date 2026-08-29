@@ -2,8 +2,8 @@ use std::thread;
 use std::time::Duration;
 
 use colored::Colorize;
-use discord_rich_presence::activity::{Activity, Assets, Button};
 use discord_rich_presence::DiscordIpc;
+use discord_rich_presence::activity::{Activity, Assets, Button};
 use user_idle::UserIdle;
 
 use crate::cli::Cli;
@@ -22,22 +22,15 @@ pub(crate) fn format_inactive_message(seconds: u64, minutes: u64) -> String {
 
 pub(crate) fn print_banner(afk_after: i64, disable_color: bool) {
     if !disable_color {
-        println!("{}{}", "AFK RPC".magenta(), " is enabled.");
+        println!("{} is enabled.", "AFK RPC".magenta());
         if afk_after == 1 {
-            println!(
-                "{}{}{}",
-                "Will AFK after ",
-                afk_after.to_string().magenta(),
-                " minute."
-            );
+            println!("Will AFK after {} minute.", afk_after.to_string().magenta());
         } else if afk_after == 0 {
-            println!("{}{}", "Will AFK ", "immediately".magenta());
+            println!("Will AFK {}", "immediately".magenta());
         } else {
             println!(
-                "{}{}{}",
-                "Will AFK after ",
-                afk_after.to_string().magenta(),
-                " minutes."
+                "Will AFK after {} minutes.",
+                afk_after.to_string().magenta()
             );
         }
     } else {
@@ -58,11 +51,8 @@ pub(crate) fn run(args: &Cli) -> Result<(), RpcError> {
 
     let activity = Activity::new();
     let activity_state = activity.state("Currently Inactive");
-    let activity_large_image = activity_state.assets(
-        Assets::new()
-            .large_image("idle")
-            .large_text("Inactive"),
-    );
+    let activity_large_image =
+        activity_state.assets(Assets::new().large_image("idle").large_text("Inactive"));
     let activity_button = activity_large_image.buttons(vec![Button::new(
         "Check out the Github!",
         "https://github.com/Rayrsn/Discord-RPC-cli",

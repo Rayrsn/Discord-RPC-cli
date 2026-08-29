@@ -38,7 +38,11 @@ pub(crate) fn print_summary(args: &Cli) {
     }
 }
 
-fn str_entry(entries: &mut Vec<(&'static str, String)>, label: &'static str, value: &Option<String>) {
+fn str_entry(
+    entries: &mut Vec<(&'static str, String)>,
+    label: &'static str,
+    value: &Option<String>,
+) {
     if let Some(value) = value {
         entries.push((label, value.clone()));
     }

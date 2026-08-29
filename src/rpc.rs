@@ -58,10 +58,7 @@ pub(crate) fn handle_exit(exit_after: Option<i64>, disable_color: bool) -> Resul
         exit(0);
     } else {
         if !disable_color {
-            println!(
-                "{}",
-                "Running indefinitely, Press Ctrl+C to exit.".cyan()
-            );
+            println!("{}", "Running indefinitely, Press Ctrl+C to exit.".cyan());
         } else {
             println!("Running indefinitely, Press Ctrl+C to exit.");
         }

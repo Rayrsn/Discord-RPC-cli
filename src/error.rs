@@ -38,7 +38,9 @@ impl fmt::Display for RpcError {
             RpcError::TimeConflict => write!(
                 f,
                 "{prefix}{}",
-                "Start time and End time cannot be set while enable_time is true.".red().bold()
+                "Start time and End time cannot be set while enable_time is true."
+                    .red()
+                    .bold()
             ),
             RpcError::ButtonOrder {
                 button_text_1,
@@ -64,10 +66,16 @@ impl fmt::Display for RpcError {
                 "{prefix}Invalid party size values. Current size and max size must be positive, and current size cannot exceed max size."
             ),
             RpcError::ConnectFailed => {
-                write!(f, "Client failed to connect to Discord, Please try again or relaunch Discord.")
+                write!(
+                    f,
+                    "Client failed to connect to Discord, Please try again or relaunch Discord."
+                )
             }
             RpcError::SetActivityFailed => {
-                write!(f, "Client failed to set activity, Please try again or relaunch Discord.")
+                write!(
+                    f,
+                    "Client failed to set activity, Please try again or relaunch Discord."
+                )
             }
             RpcError::InvalidNumericValue(name) => write!(f, "{prefix}Invalid {name} value"),
             RpcError::IdleDetectionFailed(err) => {

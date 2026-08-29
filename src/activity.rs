@@ -50,7 +50,10 @@ pub(crate) fn build_activity(args: &Cli) -> Activity<'_> {
     if args.enable_time || args.start_time.is_some() || args.end_time.is_some() {
         let mut timestamps = activity::Timestamps::new();
         if args.enable_time {
-            let time_unix = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64;
+            let time_unix = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs() as i64;
             timestamps = timestamps.start(time_unix);
         }
         if let Some(start) = args.start_time {
@@ -152,7 +155,10 @@ mod tests {
         args.enable_time = true;
         let payload = json_of(&build_activity(&args));
         let start = payload["timestamps"]["start"].as_i64().unwrap();
-        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64;
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64;
         assert!((start - now).abs() <= 5);
         assert!(payload["timestamps"].get("end").is_none());
     }
