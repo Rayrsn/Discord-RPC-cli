@@ -5,22 +5,8 @@ use colored::*;
 use user_idle::UserIdle;
 
 mod cli;
-
-fn check_current_party_size(party_size: &str) -> String {
-    if party_size != "__None"{
-        party_size.trim_matches('[').trim_matches(']').split(",").next().unwrap_or("1").to_string()
-    } else {
-        "1".to_string()
-    }
-}
-
-fn check_max_party_size(party_size: &str) -> String {
-    if party_size != "__None"{
-        party_size.trim_matches('[').trim_matches(']').split(",").nth(1).unwrap_or("1").to_string()
-    } else {
-        "1".to_string()
-    }
-}
+mod error;
+mod validate;
 
 fn main() {
     let args = cli::Cli::parse();
@@ -29,6 +15,11 @@ fn main() {
     let afk_update = args.afk_update;
 
     if !afk_rpc {
+    if let Err(err) = validate::validate(&args) {
+        eprintln!("{err}");
+        exit(err.exit_code());
+    }
+
     let mut client = DiscordIpcClient::new(&args.clientid).expect("Failed to create client");
 
     let state = args.state;
@@ -41,44 +32,14 @@ fn main() {
     let button_url_1 = args.button_url_1;
     let button_text_2 = args.button_text_2;
     let button_url_2 = args.button_url_2;
-    let current_party_size = &check_current_party_size(&args.party_size);
-    let max_party_size = &check_max_party_size(&args.party_size);
+    let current_party_size = &validate::check_current_party_size(&args.party_size);
+    let max_party_size = &validate::check_max_party_size(&args.party_size);
     let party_id = args.party_id;
     let match_id = args.match_id;
     let join_id = args.join_id;
     let spectate_id = args.spectate_id;
     let enable_time = args.enable_time;
     let activity = activity::Activity::new();
-
-    // Exit conditions
-    if args.clientid == "__None" {
-        println!("{}{}", "error: ".red().bold(),"The following required argument was not provided: clientid
-
-USAGE:
-    discord-rpc-cli [OPTIONS]
-
-For more information try --help");
-        exit(1);
-    }
-
-    if (button_text_1 == "__None" && button_text_2 !="__None") || (button_url_1 == "__None" && button_url_2 !="__None"){
-        println!("{}{}","error: ".red().bold(),"Replace button 2 with button 1.");
-        println!("button_text_1: {} button_url_1: {} button_text_2: {} button_url_2: {}",button_text_1,button_url_1,button_text_2,button_url_2);
-        exit(1)
-    }
-    if (enable_time && args.start_time != -1) || (enable_time && args.end_time != -1) {
-        println!("{}{}","error: ".red().bold(),"Start time and End time cannot be set while enable_time is true.".red().bold());
-        exit(1)
-    }
-
-    if party_id != "__None" && args.party_size == "__None"{
-        println!("{}{}","error: ".red().bold(),"party_id has to be run with a party_size.".red().bold());
-        exit(1)
-    }
-    if match_id == "__None" && (join_id != "__None" || spectate_id != "__None") {
-        println!("{}{}","error: ".red().bold(),"match_id is not specified.".red().bold());
-        exit(1)
-    }
 
 
     match client.connect() {
@@ -146,10 +107,6 @@ For more information try --help");
         let activity_party_size:Activity = if args.party_size != "__None" {
             let current_size = current_party_size.parse::<i32>().unwrap_or(1);
             let max_size = max_party_size.parse::<i32>().unwrap_or(1);
-            if current_size < 1 || max_size < 1 || current_size > max_size {
-                println!("{}{}","error: ".red().bold(),"Invalid party size values. Current size and max size must be positive, and current size cannot exceed max size.");
-                exit(1);
-            }
             activity_end_time.party(Party::new().size([current_size, max_size]))
         } else {
             activity_end_time
@@ -157,10 +114,6 @@ For more information try --help");
         let activity_party_id:Activity = if party_id != "__None" {
             let current_size = current_party_size.parse::<i32>().unwrap_or(1);
             let max_size = max_party_size.parse::<i32>().unwrap_or(1);
-            if current_size < 1 || max_size < 1 || current_size > max_size {
-                println!("{}{}","error: ".red().bold(),"Invalid party size values. Current size and max size must be positive, and current size cannot exceed max size.");
-                exit(1);
-            }
             activity_party_size.party(Party::new().size([current_size, max_size]).id(&party_id))
         } else {
             activity_party_size
