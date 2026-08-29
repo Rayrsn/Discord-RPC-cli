@@ -82,3 +82,6 @@ You just can't. (Discord Limitation)
 
 ## Questions
 ### If yall have any questions or just wanna talk, add me on [Discord](https://rayr.ml/LinkInBio) or use my username Rayr#6709 (this might change so it's better to just use the link)
+
+## License
+This project is licensed under the [MIT License](LICENSE).
