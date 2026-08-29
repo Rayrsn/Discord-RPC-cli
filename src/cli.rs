@@ -172,6 +172,13 @@ pub(crate) struct Cli {
     pub afk_after: i64,
 
     #[clap(
+        long = "afk_seconds",
+        help = "How many seconds should pass after the AFK RPC is started [In Seconds] (overrides afk_after) (optional)",
+        display_order = 21
+    )]
+    pub afk_seconds: Option<u64>,
+
+    #[clap(
         short = 'k',
         long = "afk_update",
         help = "How often to check wether the user is idle or not [In Seconds](optional)",
@@ -222,6 +229,7 @@ pub(crate) fn test_cli() -> Cli {
         afk_rpc: false,
         afk_after: 5,
         afk_update: 20,
+        afk_seconds: None,
         exit_after: None,
         disable_color: false,
     }

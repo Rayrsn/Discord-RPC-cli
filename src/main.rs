@@ -7,6 +7,7 @@ mod afk;
 mod cli;
 mod display;
 mod error;
+mod idle;
 mod rpc;
 mod validate;
 

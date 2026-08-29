@@ -18,7 +18,6 @@ pub(crate) enum RpcError {
     ConnectFailed,
     SetActivityFailed,
     InvalidNumericValue(&'static str),
-    IdleDetectionFailed(String),
 }
 
 impl RpcError {
@@ -78,9 +77,6 @@ impl fmt::Display for RpcError {
                 )
             }
             RpcError::InvalidNumericValue(name) => write!(f, "{prefix}Invalid {name} value"),
-            RpcError::IdleDetectionFailed(err) => {
-                write!(f, "{prefix}Failed to get user idle time: {err}")
-            }
         }
     }
 }

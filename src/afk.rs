@@ -4,10 +4,10 @@ use std::time::Duration;
 use colored::Colorize;
 use discord_rich_presence::DiscordIpc;
 use discord_rich_presence::activity::{Activity, Assets, Button};
-use user_idle::UserIdle;
 
 use crate::cli::Cli;
 use crate::error::RpcError;
+use crate::idle::{IdleMonitor, IdleState};
 use crate::rpc;
 
 pub(crate) const AFK_CLIENT_ID: &str = "871404899915665438";
@@ -20,34 +20,53 @@ pub(crate) fn format_inactive_message(seconds: u64, minutes: u64) -> String {
     }
 }
 
-pub(crate) fn print_banner(afk_after: i64, disable_color: bool) {
+pub(crate) fn print_banner(threshold_seconds: u64, disable_color: bool) {
     if !disable_color {
         println!("{} is enabled.", "AFK RPC".magenta());
-        if afk_after == 1 {
-            println!("Will AFK after {} minute.", afk_after.to_string().magenta());
-        } else if afk_after == 0 {
+        if threshold_seconds == 0 {
             println!("Will AFK {}", "immediately".magenta());
-        } else {
+        } else if threshold_seconds < 60 {
             println!(
-                "Will AFK after {} minutes.",
-                afk_after.to_string().magenta()
+                "Will AFK after {} seconds.",
+                threshold_seconds.to_string().magenta()
             );
+        } else if threshold_seconds == 60 {
+            println!("Will AFK after {} minute.", "1".magenta());
+        } else {
+            let minutes = threshold_seconds / 60;
+            println!("Will AFK after {} minutes.", minutes.to_string().magenta());
         }
     } else {
         println!("AFK RPC is enabled.");
-        if afk_after == 1 {
-            println!("Will AFK after {afk_after} minute.");
-        } else if afk_after == 0 {
+        if threshold_seconds == 0 {
             println!("Will AFK immediately.");
+        } else if threshold_seconds < 60 {
+            println!("Will AFK after {threshold_seconds} seconds.");
+        } else if threshold_seconds == 60 {
+            println!("Will AFK after 1 minute.");
         } else {
-            println!("Will AFK after {afk_after} minutes.");
+            let minutes = threshold_seconds / 60;
+            println!("Will AFK after {minutes} minutes.");
         }
+    }
+}
+
+pub(crate) fn get_threshold(args: &Cli) -> Result<Duration, RpcError> {
+    if let Some(seconds) = args.afk_seconds {
+        Ok(Duration::from_secs(seconds))
+    } else {
+        let mins: u64 = args
+            .afk_after
+            .try_into()
+            .map_err(|_| RpcError::InvalidNumericValue("afk_after"))?;
+        Ok(Duration::from_secs(mins * 60))
     }
 }
 
 pub(crate) fn run(args: &Cli) -> Result<(), RpcError> {
     let mut client = rpc::connect(AFK_CLIENT_ID)?;
-    print_banner(args.afk_after, args.disable_color);
+    let threshold = get_threshold(args)?;
+    print_banner(threshold.as_secs(), args.disable_color);
 
     let activity = Activity::new();
     let activity_state = activity.state("Currently Inactive");
@@ -62,36 +81,27 @@ pub(crate) fn run(args: &Cli) -> Result<(), RpcError> {
         .afk_update
         .try_into()
         .map_err(|_| RpcError::InvalidNumericValue("afk_update"))?;
-    let afk_after_mins: u64 = args
-        .afk_after
-        .try_into()
-        .map_err(|_| RpcError::InvalidNumericValue("afk_after"))?;
 
-    let mut connected = false;
+    let mut monitor = IdleMonitor::new(threshold);
+    let mut is_afk_active = false;
 
     loop {
         thread::sleep(Duration::from_secs(update_secs));
-        let idle = match UserIdle::get_time() {
-            Ok(idle) => idle,
-            Err(err) => return Err(RpcError::IdleDetectionFailed(err.to_string())),
-        };
 
-        let idle_minutes = idle.as_minutes();
-        let idle_seconds = idle.as_seconds();
-
-        if idle_minutes >= afk_after_mins && !connected {
-            client.connect().map_err(|_| RpcError::ConnectFailed)?;
-
-            let details = format_inactive_message(idle_seconds, idle_minutes);
-            client
-                .set_activity(activity_button.clone().details(&details))
-                .map_err(|_| RpcError::SetActivityFailed)?;
-            connected = true;
-        }
-
-        if connected && idle_minutes < afk_after_mins {
-            rpc::clear_activity(&mut client)?;
-            connected = false;
+        match monitor.check_idle(threshold) {
+            IdleState::Idle(elapsed) => {
+                let seconds = elapsed.as_secs();
+                let minutes = seconds / 60;
+                let details = format_inactive_message(seconds, minutes);
+                let _ = client.set_activity(activity_button.clone().details(&details));
+                is_afk_active = true;
+            }
+            IdleState::Active => {
+                if is_afk_active {
+                    let _ = rpc::clear_activity(&mut client);
+                    is_afk_active = false;
+                }
+            }
         }
     }
 }
@@ -134,5 +144,23 @@ mod tests {
             format_inactive_message(360, 6),
             "I've been inactive for 6 minutes"
         );
+    }
+
+    #[test]
+    fn threshold_prefers_explicit_seconds() {
+        let mut args = crate::cli::test_cli();
+        args.afk_seconds = Some(10);
+        args.afk_after = 5;
+        assert_eq!(get_threshold(&args).unwrap(), Duration::from_secs(10));
+    }
+
+    #[test]
+    fn threshold_falls_back_to_minutes() {
+        let mut args = crate::cli::test_cli();
+        args.afk_after = 5;
+        assert_eq!(get_threshold(&args).unwrap(), Duration::from_secs(300));
+
+        args.afk_after = 0;
+        assert_eq!(get_threshold(&args).unwrap(), Duration::from_secs(0));
     }
 }
