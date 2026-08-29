@@ -15,6 +15,10 @@ pub(crate) enum RpcError {
     PartyIdWithoutSize,
     MatchIdMissing,
     InvalidPartySize,
+    ConnectFailed,
+    SetActivityFailed,
+    InvalidNumericValue(&'static str),
+    IdleDetectionFailed(String),
 }
 
 impl RpcError {
@@ -59,6 +63,16 @@ impl fmt::Display for RpcError {
                 f,
                 "{prefix}Invalid party size values. Current size and max size must be positive, and current size cannot exceed max size."
             ),
+            RpcError::ConnectFailed => {
+                write!(f, "Client failed to connect to Discord, Please try again or relaunch Discord.")
+            }
+            RpcError::SetActivityFailed => {
+                write!(f, "Client failed to set activity, Please try again or relaunch Discord.")
+            }
+            RpcError::InvalidNumericValue(name) => write!(f, "{prefix}Invalid {name} value"),
+            RpcError::IdleDetectionFailed(err) => {
+                write!(f, "{prefix}Failed to get user idle time: {err}")
+            }
         }
     }
 }

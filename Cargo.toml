@@ -16,7 +16,7 @@ keywords = ["discord", "rich-presence", "cli", "rpc"]
 discord-rich-presence = "0.2.5"
 clap = { version = "4.5.40", features = ["derive"] }
 colored = "3.0.0"
-user-idle = "0.6.0"
+user-idle = { version = "0.6.0", default-features = false, features = ["dbus"] }
 
 [dev-dependencies]
 serde_json = "1"

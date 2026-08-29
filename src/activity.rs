@@ -5,7 +5,7 @@ use discord_rich_presence::activity::{self, Activity, Assets, Button, Party, Sec
 use crate::cli::Cli;
 use crate::validate::{non_empty, parse_party_size};
 
-pub(crate) fn build_activity(args: &Cli) -> Activity {
+pub(crate) fn build_activity(args: &Cli) -> Activity<'_> {
     let mut activity = Activity::new();
     if let Some(state) = &args.state {
         activity = activity.state(state);
