@@ -164,6 +164,7 @@ dependencies = [
  "clap",
  "colored",
  "discord-rich-presence",
+ "serde_json",
  "user-idle",
 ]
 

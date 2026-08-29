@@ -74,3 +74,33 @@ pub(crate) struct Cli {
     #[clap(short = 'C', long = "disable_color", help = "Whether to disable colors or not (optional)", display_order = 24)]
     pub disable_color: bool,
 }
+
+#[cfg(test)]
+pub(crate) fn test_cli() -> Cli {
+    Cli {
+        clientid: None,
+        details: None,
+        state: None,
+        large_image: None,
+        large_text: None,
+        small_image: None,
+        small_text: None,
+        button_url_1: None,
+        button_text_1: None,
+        button_url_2: None,
+        button_text_2: None,
+        start_time: None,
+        end_time: None,
+        party_size: None,
+        party_id: None,
+        match_id: None,
+        join_id: None,
+        spectate_id: None,
+        enable_time: false,
+        afk_rpc: false,
+        afk_after: 5,
+        afk_update: 20,
+        exit_after: None,
+        disable_color: false,
+    }
+}
