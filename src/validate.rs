@@ -2,11 +2,11 @@ use crate::cli::Cli;
 use crate::error::RpcError;
 
 pub(crate) fn validate(args: &Cli) -> Result<(), RpcError> {
-    if args.clientid == "__None" {
+    if args.clientid.is_none() {
         return Err(RpcError::MissingClientId);
     }
-    if (args.button_text_1 == "__None" && args.button_text_2 != "__None")
-        || (args.button_url_1 == "__None" && args.button_url_2 != "__None")
+    if (args.button_text_1.is_none() && args.button_text_2.is_some())
+        || (args.button_url_1.is_none() && args.button_url_2.is_some())
     {
         return Err(RpcError::ButtonOrder {
             button_text_1: args.button_text_1.clone(),
@@ -15,22 +15,19 @@ pub(crate) fn validate(args: &Cli) -> Result<(), RpcError> {
             button_url_2: args.button_url_2.clone(),
         });
     }
-    if args.enable_time && (args.start_time != -1 || args.end_time != -1) {
+    if args.enable_time && (args.start_time.is_some() || args.end_time.is_some()) {
         return Err(RpcError::TimeConflict);
     }
-    if args.party_id != "__None" && args.party_size == "__None" {
+    if args.party_id.is_some() && args.party_size.is_none() {
         return Err(RpcError::PartyIdWithoutSize);
     }
-    if args.match_id == "__None" && (args.join_id != "__None" || args.spectate_id != "__None") {
+    if args.match_id.is_none()
+        && (non_empty(&args.join_id).is_some() || non_empty(&args.spectate_id).is_some())
+    {
         return Err(RpcError::MatchIdMissing);
     }
-    if args.party_size != "__None" {
-        let current_size = check_current_party_size(&args.party_size)
-            .parse::<i32>()
-            .unwrap_or(1);
-        let max_size = check_max_party_size(&args.party_size)
-            .parse::<i32>()
-            .unwrap_or(1);
+    if let Some(party_size) = &args.party_size {
+        let (current_size, max_size) = parse_party_size(party_size);
         if current_size < 1 || max_size < 1 || current_size > max_size {
             return Err(RpcError::InvalidPartySize);
         }
@@ -38,32 +35,20 @@ pub(crate) fn validate(args: &Cli) -> Result<(), RpcError> {
     Ok(())
 }
 
-pub(crate) fn check_current_party_size(party_size: &str) -> String {
-    if party_size != "__None" {
-        party_size
-            .trim_matches('[')
-            .trim_matches(']')
-            .split(",")
-            .next()
-            .unwrap_or("1")
-            .to_string()
-    } else {
-        "1".to_string()
-    }
+/// Absent (`None`) and empty (`Some("")`) strings are treated the same way,
+/// replacing the old mix of `"__None"` sentinel and `""` comparisons.
+pub(crate) fn non_empty(value: &Option<String>) -> Option<&str> {
+    value.as_deref().filter(|value| !value.is_empty())
 }
 
-pub(crate) fn check_max_party_size(party_size: &str) -> String {
-    if party_size != "__None" {
-        party_size
-            .trim_matches('[')
-            .trim_matches(']')
-            .split(",")
-            .nth(1)
-            .unwrap_or("1")
-            .to_string()
-    } else {
-        "1".to_string()
-    }
+/// Parses `"[current,max]"` (brackets optional, whitespace not trimmed) with a
+/// silent fallback to 1 for unparseable parts, matching the historical
+/// `check_current_party_size`/`check_max_party_size` behavior.
+pub(crate) fn parse_party_size(party_size: &str) -> (i32, i32) {
+    let mut parts = party_size.trim_matches('[').trim_matches(']').split(',');
+    let current = parts.next().unwrap_or("1").parse::<i32>().unwrap_or(1);
+    let max = parts.next().unwrap_or("1").parse::<i32>().unwrap_or(1);
+    (current, max)
 }
 
 #[cfg(test)]
@@ -72,29 +57,29 @@ mod tests {
 
     fn test_args() -> Cli {
         Cli {
-            clientid: "__None".to_string(),
-            details: "__None".to_string(),
-            state: "__None".to_string(),
-            large_image: "__None".to_string(),
-            large_text: "__None".to_string(),
-            small_image: "__None".to_string(),
-            small_text: "__None".to_string(),
-            button_url_1: "__None".to_string(),
-            button_text_1: "__None".to_string(),
-            button_url_2: "__None".to_string(),
-            button_text_2: "__None".to_string(),
-            start_time: -1,
-            end_time: -1,
-            party_size: "__None".to_string(),
-            party_id: "__None".to_string(),
-            match_id: "__None".to_string(),
-            join_id: "__None".to_string(),
-            spectate_id: "__None".to_string(),
+            clientid: None,
+            details: None,
+            state: None,
+            large_image: None,
+            large_text: None,
+            small_image: None,
+            small_text: None,
+            button_url_1: None,
+            button_text_1: None,
+            button_url_2: None,
+            button_text_2: None,
+            start_time: None,
+            end_time: None,
+            party_size: None,
+            party_id: None,
+            match_id: None,
+            join_id: None,
+            spectate_id: None,
             enable_time: false,
             afk_rpc: false,
             afk_after: 5,
             afk_update: 20,
-            exit_after: -1,
+            exit_after: None,
             disable_color: false,
         }
     }
@@ -102,7 +87,7 @@ mod tests {
     #[test]
     fn accepts_minimal_valid_args() {
         let mut args = test_args();
-        args.clientid = "1234567890".to_string();
+        args.clientid = Some("1234567890".to_string());
         assert!(validate(&args).is_ok());
     }
 
@@ -115,72 +100,97 @@ mod tests {
     #[test]
     fn rejects_button_2_without_button_1() {
         let mut args = test_args();
-        args.clientid = "1234567890".to_string();
-        args.button_url_2 = "https://example.com".to_string();
-        args.button_text_2 = "Btn2".to_string();
+        args.clientid = Some("1234567890".to_string());
+        args.button_url_2 = Some("https://example.com".to_string());
+        args.button_text_2 = Some("Btn2".to_string());
         assert!(matches!(validate(&args), Err(RpcError::ButtonOrder { .. })));
+    }
+
+    #[test]
+    fn accepts_button_1_alone() {
+        let mut args = test_args();
+        args.clientid = Some("1234567890".to_string());
+        args.button_text_1 = Some("Btn1".to_string());
+        args.button_url_1 = Some("https://example.com".to_string());
+        assert!(validate(&args).is_ok());
     }
 
     #[test]
     fn rejects_time_conflict() {
         let mut args = test_args();
-        args.clientid = "1234567890".to_string();
+        args.clientid = Some("1234567890".to_string());
         args.enable_time = true;
-        args.start_time = 1756000000;
+        args.start_time = Some(1756000000);
         assert!(matches!(validate(&args), Err(RpcError::TimeConflict)));
     }
 
     #[test]
     fn rejects_party_id_without_party_size() {
         let mut args = test_args();
-        args.clientid = "1234567890".to_string();
-        args.party_id = "abc".to_string();
+        args.clientid = Some("1234567890".to_string());
+        args.party_id = Some("abc".to_string());
         assert!(matches!(validate(&args), Err(RpcError::PartyIdWithoutSize)));
     }
 
     #[test]
     fn rejects_join_id_without_match_id() {
         let mut args = test_args();
-        args.clientid = "1234567890".to_string();
-        args.join_id = "join".to_string();
+        args.clientid = Some("1234567890".to_string());
+        args.join_id = Some("join".to_string());
         assert!(matches!(validate(&args), Err(RpcError::MatchIdMissing)));
+    }
+
+    #[test]
+    fn treats_empty_join_id_as_absent() {
+        let mut args = test_args();
+        args.clientid = Some("1234567890".to_string());
+        args.join_id = Some(String::new());
+        assert!(validate(&args).is_ok());
     }
 
     #[test]
     fn rejects_invalid_party_size_range() {
         let mut args = test_args();
-        args.clientid = "1234567890".to_string();
-        args.party_size = "[5,2]".to_string();
+        args.clientid = Some("1234567890".to_string());
+        args.party_size = Some("[5,2]".to_string());
         assert!(matches!(validate(&args), Err(RpcError::InvalidPartySize)));
     }
 
     #[test]
     fn rejects_non_positive_party_size() {
         let mut args = test_args();
-        args.clientid = "1234567890".to_string();
-        args.party_size = "[0,10]".to_string();
+        args.clientid = Some("1234567890".to_string());
+        args.party_size = Some("[0,10]".to_string());
         assert!(matches!(validate(&args), Err(RpcError::InvalidPartySize)));
     }
 
     #[test]
     fn accepts_valid_party_size() {
         let mut args = test_args();
-        args.clientid = "1234567890".to_string();
-        args.party_size = "[1,10]".to_string();
+        args.clientid = Some("1234567890".to_string());
+        args.party_size = Some("[1,10]".to_string());
         assert!(validate(&args).is_ok());
     }
 
     #[test]
-    fn party_size_helpers_split_bracketed_pair() {
-        assert_eq!(check_current_party_size("[3,7]"), "3");
-        assert_eq!(check_max_party_size("[3,7]"), "7");
+    fn parse_party_size_handles_bracketed_pair() {
+        assert_eq!(parse_party_size("[3,7]"), (3, 7));
+        assert_eq!(parse_party_size("3,7"), (3, 7));
+        assert_eq!(parse_party_size("[[1,10]]"), (1, 10));
     }
 
     #[test]
-    fn party_size_helpers_fall_back_to_one() {
-        assert_eq!(check_current_party_size("abc"), "abc");
-        assert_eq!(check_max_party_size("abc"), "1");
-        assert_eq!(check_current_party_size("__None"), "1");
-        assert_eq!(check_max_party_size("__None"), "1");
+    fn parse_party_size_falls_back_to_one() {
+        assert_eq!(parse_party_size("abc"), (1, 1));
+        assert_eq!(parse_party_size("[5]"), (5, 1));
+        assert_eq!(parse_party_size(""), (1, 1));
+        assert_eq!(parse_party_size("[1, 10]"), (1, 1)); // whitespace untrimmed, like before
+    }
+
+    #[test]
+    fn non_empty_treats_empty_as_absent() {
+        assert_eq!(non_empty(&None), None);
+        assert_eq!(non_empty(&Some(String::new())), None);
+        assert_eq!(non_empty(&Some("x".to_string())), Some("x"));
     }
 }

@@ -6,10 +6,10 @@ use colored::Colorize;
 pub(crate) enum RpcError {
     MissingClientId,
     ButtonOrder {
-        button_text_1: String,
-        button_url_1: String,
-        button_text_2: String,
-        button_url_2: String,
+        button_text_1: Option<String>,
+        button_url_1: Option<String>,
+        button_text_2: Option<String>,
+        button_url_2: Option<String>,
     },
     TimeConflict,
     PartyIdWithoutSize,
@@ -31,6 +31,11 @@ impl fmt::Display for RpcError {
                 f,
                 "{prefix}The following required argument was not provided: clientid\n\nUSAGE:\n    discord-rpc-cli [OPTIONS]\n\nFor more information try --help"
             ),
+            RpcError::TimeConflict => write!(
+                f,
+                "{prefix}{}",
+                "Start time and End time cannot be set while enable_time is true.".red().bold()
+            ),
             RpcError::ButtonOrder {
                 button_text_1,
                 button_url_1,
@@ -38,12 +43,11 @@ impl fmt::Display for RpcError {
                 button_url_2,
             } => write!(
                 f,
-                "{prefix}Replace button 2 with button 1.\nbutton_text_1: {button_text_1} button_url_1: {button_url_1} button_text_2: {button_text_2} button_url_2: {button_url_2}"
-            ),
-            RpcError::TimeConflict => write!(
-                f,
-                "{prefix}{}",
-                "Start time and End time cannot be set while enable_time is true.".red().bold()
+                "{prefix}Replace button 2 with button 1.\nbutton_text_1: {} button_url_1: {} button_text_2: {} button_url_2: {}",
+                display_value(button_text_1),
+                display_value(button_url_1),
+                display_value(button_text_2),
+                display_value(button_url_2)
             ),
             RpcError::PartyIdWithoutSize => write!(
                 f,
@@ -57,4 +61,10 @@ impl fmt::Display for RpcError {
             ),
         }
     }
+}
+
+/// Renders absent fields as `__None` in error output, matching the historical
+/// sentinel-based messages.
+fn display_value(value: &Option<String>) -> &str {
+    value.as_deref().unwrap_or("__None")
 }
